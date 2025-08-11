@@ -1,0 +1,41 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch:  # 手动触发
+  push:
+    tags:
+      - 'v*' # 推送标签时触发，比如 v1.0.0
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.0'
+          channel: 'stable'
+
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows Release
+        run: flutter build windows --release
+
+      - name: Zip release files
+        run: |
+          cd build/windows/x64/runner/Release
+          powershell Compress-Archive * ../../../../../dart_simple_live_windows.zip
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dart_simple_live_windows
+          path: build/windows/x64/runner/dart_simple_live_windows.zip
